@@ -1,7 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.NetworkInformation;
+using Unity.Mathematics;
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 public class GeometryUtilities 
 {
@@ -50,5 +54,34 @@ public class GeometryUtilities
         return newMesh;
     }
 
+    public static List<int>[]  FindNeighbors(Mesh mesh, out int maxValence){
+        int[] faces = mesh.triangles;
+        int vertexCount = mesh.vertexCount;
+        List<int>[] neighborsList = new List<int>[vertexCount];
+        maxValence = 0;
+        for (int i = 0; i < vertexCount; i++){
+            neighborsList[i] = new List<int>(maxValence); // by using the current maxValence, we can avoid unnecessary allocations
+            for (int j = 0; j < faces.Length; j += 3){ // triangle faces come in groups of 3
+                int v1 = faces[j];
+                int v2 = faces[j+1];
+                int v3 = faces[j+2];
+                if (v1 == i || v2 == i | v3 == i){ // one of the vertices in the triangle has to be vertex i
+                    if (v1 != i && !neighborsList[i].Contains(v1)) {
+                        neighborsList[i].Add(v1);
+                    }
+                    if (v2 != i && !neighborsList[i].Contains(v2)) {
+                        neighborsList[i].Add(v2);
+                    }
+                    if (v3 != i && !neighborsList[i].Contains(v3)) {
+                        neighborsList[i].Add(v3);
+                    }
+                }
+                // We store the current highest valence we have found
+                maxValence = math.max(neighborsList[i].Count, maxValence);
 
+            }
+        }
+        
+        return neighborsList;
+    }
 }
