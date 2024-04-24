@@ -15,6 +15,8 @@ public class GPUMesh : MonoBehaviour
         mesh = meshFilter.mesh;
     }
 
+
+
     int CalculateKernelSize(int ThreadGroupSize, int threadCount)
     {
         

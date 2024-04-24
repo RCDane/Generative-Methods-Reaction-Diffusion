@@ -11,6 +11,7 @@ RWStructuredBuffer<float3> _outputMesh;
 
 
 
+
 #pragma kernel CSMain
 [numthreads(THREAD_GROUP_SIZE,1,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)

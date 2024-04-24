@@ -1,0 +1,38 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSValenceColoring
+#pragma editor_sync_compilation
+#define THREAD_GROUP_SIZE 128
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+
+
+
+RWStructuredBuffer<int> _neighboors;
+RWStructuredBuffer<float3> _color;
+
+int _vertexCount;
+int _maxValancy;
+
+[numthreads(THREAD_GROUP_SIZE,1,1)]
+void CSValenceColoring (uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= _vertexCount)
+        return;
+    
+    int idx = id.x*_maxValancy;
+    int count = 0;
+    
+    for (int index = 0; index < _maxValancy; index++)
+    {
+        
+        int offsetId = idx + index;
+        if (_neighboors[offsetId] == -1){
+            break;
+        }
+        count += 1;
+
+    }
+
+    _color[id.x] = float3(1.0,1.0,1.0)* ((float)count/(float)_maxValancy);
+    
+}

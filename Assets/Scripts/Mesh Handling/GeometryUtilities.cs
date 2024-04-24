@@ -78,7 +78,7 @@ public class GeometryUtilities
                 }
                 // We store the current highest valence we have found
                 maxValence = math.max(neighborsList[i].Count, maxValence);
-
+                 
             }
         }
         
