@@ -57,8 +57,8 @@ public class GPUMesh : MonoBehaviour
             
             Vector3[] vertices = mesh.vertices;
             var dispatchAmount = CalculateKernelSize((int)sizeX, vertices.Length);
-            
 
+            
             GraphicsBuffer vertexBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Vertex, vertices.Length, 12);
             vertexBuffer.SetData(vertices);
             

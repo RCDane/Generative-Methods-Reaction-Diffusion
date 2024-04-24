@@ -32,7 +32,8 @@ public class MeshTest : MonoBehaviour
         Mesh newMesh = GeometryUtilities.CombineVertices(_mesh, 0.001f);      
         int vertexCount = newMesh.vertexCount;
 
-        _neighbors = GeometryUtilities.FindNeighbors(newMesh, out _valence);
+        int[] _;
+        (_neighbors, _) = GeometryUtilities.FindNeighbors(newMesh, out _valence);
 
 
         _kernel = computeShader.FindKernel("CSValenceColoring");
