@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using Unity.Mathematics;
 using UnityEngine;
 
 public class GPULaplacian : MonoBehaviour
@@ -7,12 +9,26 @@ public class GPULaplacian : MonoBehaviour
     MeshFilter meshFilter;
     Mesh mesh;
     public ComputeShader computeShader;
-
+    public Material GPUColorMat;
+    private GraphicsBuffer _vertexBuffer;
+    private ComputeBuffer _outputColorBuffer;
+    private ComputeBuffer _inputColorBuffer;
+    private ComputeBuffer _neighborBuffer;
+    private ComputeBuffer _valenceBuffer;
+    private Vector3[] _vertices;
+    private int[] _vertexNeighbors;
+    private int[] _valence;
+    int _dispatchSize = 1;
+    int _kernel = -1;
+    int _maxValency;
+    
     void Start()
     {
         meshFilter = GetComponent<MeshFilter>();
         meshFilter.mesh = GeometryUtilities.CombineVertices(meshFilter.mesh, 0.0001f);
         mesh = meshFilter.mesh;
+        GPUColorMat = GetComponent<Renderer>().material;
+        Setup();
     }
 
     int CalculateKernelSize(int ThreadGroupSize, int threadCount)
@@ -35,69 +51,93 @@ public class GPULaplacian : MonoBehaviour
         return dispatchedThreadGroupSize;
     }
 
+    void Setup()
+    {
+        uint sizeX = 0;
+        _kernel = computeShader.FindKernel("CSLaplacian");
+        computeShader.GetKernelThreadGroupSizes(_kernel, out sizeX, out _, out _);
+
+        _vertices = mesh.vertices;
+        _dispatchSize = CalculateKernelSize((int)sizeX, _vertices.Length);
+
+        List<int>[] neighbors;
+        (neighbors, _valence) = GeometryUtilities.FindNeighbors(mesh, out _maxValency);
+
+        _vertexNeighbors = new int[mesh.vertexCount*_maxValency];
+        for (int i = 0; i < mesh.vertexCount; i++)
+        {
+            List<int> neigh = neighbors[i];
+            for (int j = 0; j < _maxValency; j++)
+            {
+                if (j < neigh.Count)
+                {
+                    _vertexNeighbors[i*_maxValency+j] = neigh[j];
+                }
+                else
+                {
+                    _vertexNeighbors[i*_maxValency+j] = -1;
+                }
+            }
+        }
+        SetupBuffers();
+    }
+
+    void SetupBuffers()
+    {
+        int inputMeshPosition = Shader.PropertyToID("_inputMesh");
+        _vertexBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Vertex, _vertices.Length, 3*sizeof(float));
+        _vertexBuffer.SetData(_vertices);
+        computeShader.SetBuffer(_kernel, inputMeshPosition, _vertexBuffer);
+
+        int inputColor = Shader.PropertyToID("_inputColors");
+        _inputColorBuffer = new ComputeBuffer(_vertices.Length, 3*sizeof(float));
+        computeShader.SetBuffer(_kernel, inputColor, _inputColorBuffer);
+
+        int outputColor = Shader.PropertyToID("_outputColors");
+        _outputColorBuffer = new ComputeBuffer(_vertices.Length, 3*sizeof(float));
+        computeShader.SetBuffer(_kernel, outputColor, _outputColorBuffer);
+        
+        int inputMeshVertexNeighbours = Shader.PropertyToID("_inputVertexNeighbours");
+        _neighborBuffer = new ComputeBuffer(_vertices.Length*_maxValency, sizeof(int));
+        _neighborBuffer.SetData(_vertexNeighbors);
+        computeShader.SetBuffer(_kernel, inputMeshVertexNeighbours, _neighborBuffer);
+
+        int inputMaxValence = Shader.PropertyToID("_inputMaxValence");
+        computeShader.SetInt(inputMaxValence, _maxValency);
+
+        int inputValence = Shader.PropertyToID("_inputValence");
+        _valenceBuffer = new ComputeBuffer(_vertices.Length, sizeof(int));
+        _valenceBuffer.SetData(_valence);
+        computeShader.SetBuffer(_kernel, inputValence, _valenceBuffer);
+
+        GPUColorMat.SetBuffer("_ColorBuffer", _outputColorBuffer);
+
+        _copyBuffer = new Vector3[_vertices.Length];
+    }
+
+    ~GPULaplacian(){
+        _outputColorBuffer.Release();
+        _inputColorBuffer.Release();
+        _neighborBuffer.Release();
+        _valenceBuffer.Release();   
+        _vertexBuffer.Release();
+    }
+
+
+    Vector3[] _copyBuffer;
+
     void Update()
     {
         // if(Input.GetMouseButtonDown(0))
         {
-            var kernel = computeShader.FindKernel("CSLaplacian");
 
-            uint sizeX = 0;
-            computeShader.GetKernelThreadGroupSizes(kernel, out sizeX, out _, out _);
-            
-            Vector3[] vertices = mesh.vertices;
-            var dispatchAmount = CalculateKernelSize((int)sizeX, vertices.Length);
-            
-            int inputMeshPosition = Shader.PropertyToID("_inputMesh");
-            GraphicsBuffer vertexBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Vertex, vertices.Length, 12);
-            vertexBuffer.SetData(vertices);
-            computeShader.SetBuffer(kernel, inputMeshPosition, vertexBuffer);
+            computeShader.Dispatch(_kernel, _dispatchSize, 1, 1);
+            _outputColorBuffer.GetData(_copyBuffer);
+            _inputColorBuffer.SetData(_copyBuffer);
 
-            int outputMeshPosition = Shader.PropertyToID("_outputMesh");
-            GraphicsBuffer outputvertexBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Vertex,vertices.Length, 12);
-            computeShader.SetBuffer(kernel, outputMeshPosition, outputvertexBuffer);
+            // _outputColorBuffer.GetData(_color);
 
-
-            (List<int>[] neighbors, int[] valence) = GeometryUtilities.FindNeighbors(mesh, out int maxValence);
-
-            // var test = GeometryUtilities.FindNeighbors2(mesh, out int _);
-
-            // test[0].ForEach(x => Debug.Log(x));
-
-            int[] vertexNeighbors = new int[mesh.vertexCount*maxValence];
-            for (int i = 0; i < mesh.vertexCount; i++)
-            {
-                List<int> neigh = neighbors[i];
-                for (int j = 0; j < maxValence; j++)
-                {
-                    if (j < neigh.Count)
-                    {
-                        vertexNeighbors[i*maxValence+j] = neigh[j];
-                    }
-                    else
-                    {
-                        vertexNeighbors[i*maxValence+j] = -1;
-                    }
-                }
-            }
-            int inputMeshVertexNeighbours = Shader.PropertyToID("_inputVertexNeighbours");
-            ComputeBuffer neighborBuffer = new ComputeBuffer(vertices.Length*maxValence, sizeof(int));
-            neighborBuffer.SetData(vertexNeighbors);
-            computeShader.SetBuffer(kernel, inputMeshVertexNeighbours, neighborBuffer);
-
-            int inputMaxValence = Shader.PropertyToID("_inputMaxValence");
-            computeShader.SetInt(inputMaxValence, maxValence);
-
-            int inputValence = Shader.PropertyToID("_inputValence");
-            ComputeBuffer valenceBuffer = new ComputeBuffer(vertices.Length, sizeof(int));
-            valenceBuffer.SetData(valence);
-            computeShader.SetBuffer(kernel, inputValence, valenceBuffer);
-
-            computeShader.Dispatch(kernel, dispatchAmount, 1, 1);
-            
-            outputvertexBuffer.GetData(vertices);
-            mesh.SetVertices(vertices);
-            vertexBuffer.Release();
-            outputvertexBuffer.Release();
+            // mesh.RecalculateNormals();
         }
     }
 }

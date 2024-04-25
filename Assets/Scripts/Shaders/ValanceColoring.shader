@@ -34,7 +34,7 @@ Shader "Unlit/ValanceColoring"
             {
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
-                o.color = float4(float3(1,1,1) - _ColorBuffer[v.id], 1);
+                o.color = float4(_ColorBuffer[v.id], 1.0);
                 return o;
             }
  
