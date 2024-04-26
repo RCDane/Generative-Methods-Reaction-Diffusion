@@ -91,6 +91,7 @@ public class GPULaplacian : MonoBehaviour
 
         int inputColor = Shader.PropertyToID("_inputColors");
         _inputColorBuffer = new ComputeBuffer(_vertices.Length, 3*sizeof(float));
+        _inputColorBuffer.SetData(new Vector3[_vertices.Length]);
         computeShader.SetBuffer(_kernel, inputColor, _inputColorBuffer);
 
         int outputColor = Shader.PropertyToID("_outputColors");
@@ -126,13 +127,27 @@ public class GPULaplacian : MonoBehaviour
 
     Vector3[] _copyBuffer;
 
+	Ray ray;
+	RaycastHit hit;
+
     void Update()
     {
         // if(Input.GetMouseButtonDown(0))
         {
-
             computeShader.Dispatch(_kernel, _dispatchSize, 1, 1);
             _outputColorBuffer.GetData(_copyBuffer);
+
+            if (Input.GetMouseButtonDown(0))
+            {
+                ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                if (Physics.Raycast(ray, out hit))
+                {
+                    Debug.Log(hit.triangleIndex);
+                    _copyBuffer.SetValue(new Vector3(0.0f, 10.0f, 0.0f), mesh.triangles[3*hit.triangleIndex]); 
+                    _copyBuffer.SetValue(new Vector3(0.0f, 10.0f, 0.0f), mesh.triangles[3*hit.triangleIndex+1]); 
+                    _copyBuffer.SetValue(new Vector3(0.0f, 10.0f, 0.0f), mesh.triangles[3*hit.triangleIndex+2]); 
+                }
+            }
             _inputColorBuffer.SetData(_copyBuffer);
 
             // _outputColorBuffer.GetData(_color);
