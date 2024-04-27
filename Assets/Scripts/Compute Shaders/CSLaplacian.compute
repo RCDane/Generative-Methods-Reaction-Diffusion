@@ -4,11 +4,7 @@
 
 #define EPSILON 0.000001
 
-#define DT 0.001
-
-const float3 e = float3(1, -1, 0);
-const float d = 0.999;
-const float c = 1.4;
+#define DT 0.1
 
 // Create a RenderTexture with enableRandomWrite flag and set it
 // with cs.SetTexture
@@ -59,28 +55,36 @@ void CSLaplacian (uint3 id : SV_DispatchThreadID)
         float3 ik = ka - pi;
         float ar = length(cross(ij, ik));
         float angle = asin(ar / (length(ij) * length(ik) + EPSILON));
-        area += ar*angle; // ar/3.0;
+        area += ar*angle;
     }
 
-    // float Da = 1.0;
-    // float Db = 0.5;
-    // float k = 0.0649;
-    // float f = 0.0367;
+    const float3 e = float3(1, -1, 0);
+    const float d = 0.999;
+    const float c = 1.4;
+    const float Da = 1.0;
+    const float Db = 0.5;
+    const float k = 0.0649;
+    const float f = 0.0367;
 
-    float Da = 1.0;
-    float Db = 0.5;
-    float k = 0.062;
-    float f = 0.0545;
+    // lap /= area;
 
-    lap -= weights*inputColor;
-    lap /= area;
-    float3 v = inputColor;
-    float2 ab = v.xy + (float2(Da, Db) * lap.xy + e.yx*v.x*v.y*v.y + e.xy*float2(f*(1.0 - v.x), (k + f)*v.y)) * DT;
-    ab = max(0.0, min(1.0, ab));
+    lap /= weights;
+    float g = min(1.0, max(0.0, min(inputColor.b, lap.g*DT)));
+    float r = min(1.0, max(0.0, min(inputColor.g, lap.r*DT)));
+    float3 res = inputColor + float3(0.0, g, -g) + float3(r, -r, 0.0);
+    res = res*float3(0.99, 1.0, 1.0);
+    if (res.r < 0.0025) res.r = 0.0;
+    _outputColors[uid] = res;
+
+    // lap -= weights*inputColor;
     // float3 v = inputColor;
-    // float s = v.x*d + d * c*c * lap.y * DT;
-    // float h = v.y + s * DT;
-    _outputColors[uid] = float3(ab, 0);
-    // _outputColors[uid] = lap;//float3(s, h, 0);
-    // _outputColors[uid] = max(0.0, min(1.0, inputColor + DT*lap));
+    // float2 ab = v.xy + (float2(Da, Db) * lap.xy + e.yx*v.x*v.y*v.y + e.xy*float2(f*(1.0 - v.x), (k + f)*v.y)) * DT;
+    // ab = min(1.0, ab);
+    // _outputColors[uid] = float3(ab, 0);
+
+    // lap -= weights*inputColor;
+    // float s = inputColor.x*d + d * c*c * lap.y * DT;
+    // float h = inputColor.y + s * DT;
+    // _outputColors[uid] = float3(s, h, 0);
+
 }
