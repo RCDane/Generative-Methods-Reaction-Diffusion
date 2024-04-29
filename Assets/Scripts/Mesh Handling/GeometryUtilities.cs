@@ -171,6 +171,7 @@ public class GeometryUtilities
                 }
                 if (k == curr || k >= nfaces.Count)
                 {
+                    
                     Debug.Log($"{k}, {curr}, {nfaces.Count}");
                     Debug.Log($"{face[0]} {face[1]} {face[2]}");
                     nfaces.ForEach(x => Debug.Log(x));
