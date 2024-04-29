@@ -13,18 +13,22 @@ public class MeshGenerator : MonoBehaviour
 	List<int> triangles = new List<int>();
 
 	float terrainSurface = 0.5f;
-	int width = 32;
+	public int width = 32;
+
+	[Tooltip("Scale of the mesh in Unity's units")]
+	public Vector3 scale;
+
 	float[,,] terrainMap;
 
 	// Start is called once before the first execution of Update after the MonoBehaviour is created
 	void Start()
 	{
+		print("MeshGenerator Start");
 		mesh = new Mesh();
 		terrainMap = new float[width + 1, width + 1, width + 1];
 
 		// PopulateTerrainMap();
-		// ImplicitSurface_Sphere(Vector3.one * (width / 2), 8.0f);
-		ImplicitSurface_Torus(Vector3.one * (width / 2), 10.0f, 1.0f);
+		ImplicitSurface_Torus(Vector3.one * (width / 2), 8.0f, 2.0f);
 		CreateMeshData();
 		GetComponent<MeshFilter>().mesh = mesh;
 
@@ -174,7 +178,7 @@ public class MeshGenerator : MonoBehaviour
 
 				float interpolation_factor = (0.5f - value1) / (value2 - value1);
 				Vector3 vertPosition = vert1 + interpolation_factor * (vert2 - vert1);
-
+				// vertPosition = 
                 // Vector3 vertPosition = (vert1 + vert2) / 2f;
 
 				// Add to our vertices and triangles list and incremement the edgeIndex.
@@ -218,6 +222,8 @@ public class MeshGenerator : MonoBehaviour
 		mesh.vertices = vertices.ToArray();
 		mesh.triangles = triangles.ToArray();
 		mesh.RecalculateNormals();
+		mesh.RecalculateBounds();
+		GetComponent<MeshCollider>().sharedMesh = mesh;   
 	}
 
 	int VertForIndice (Vector3 vert) {
