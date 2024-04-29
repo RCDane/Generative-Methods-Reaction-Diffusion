@@ -27,6 +27,19 @@ public class GPULaplacian : MonoBehaviour
         meshFilter = GetComponent<MeshFilter>();
         meshFilter.mesh = GeometryUtilities.CombineVertices(meshFilter.mesh, 0.0001f);
         mesh = meshFilter.mesh;
+
+        // TODO: temp uv fix
+        float maxX = mesh.vertices.Max(x => x.x);
+        float maxY = mesh.vertices.Max(x => x.y);
+        float maxZ = mesh.vertices.Max(x => x.z);
+        Vector2[] uv = new Vector2[mesh.vertices.Length];
+        for (int i = 0; i < mesh.vertices.Length; i++)
+        {
+            Vector3 v = mesh.vertices[i];
+            uv[i] = new Vector2(v.x / maxX, v.y*v.z / (maxY*maxZ));
+        }
+        mesh.uv = uv;
+
         GPUColorMat = GetComponent<Renderer>().material;
         Setup();
     }
@@ -91,6 +104,7 @@ public class GPULaplacian : MonoBehaviour
 
         int inputColor = Shader.PropertyToID("_inputColors");
         _inputColorBuffer = new ComputeBuffer(_vertices.Length, 3*sizeof(float));
+        _inputColorBuffer.SetData(Enumerable.Range(0, _vertices.Length).Select(_ => new Vector3(0.0f, 0.0f, 1.0f)).ToArray());
         computeShader.SetBuffer(_kernel, inputColor, _inputColorBuffer);
 
         int outputColor = Shader.PropertyToID("_outputColors");
@@ -126,13 +140,30 @@ public class GPULaplacian : MonoBehaviour
 
     Vector3[] _copyBuffer;
 
+	Ray ray;
+	RaycastHit hit;
+
     void Update()
     {
         // if(Input.GetMouseButtonDown(0))
         {
-
             computeShader.Dispatch(_kernel, _dispatchSize, 1, 1);
             _outputColorBuffer.GetData(_copyBuffer);
+
+            bool leftMouse = Input.GetMouseButtonDown(0);
+            bool rightMouse = Input.GetMouseButtonDown(1);
+            if (leftMouse || rightMouse)
+            {
+                ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                if (Physics.Raycast(ray, out hit))
+                {
+                    Vector3 v = leftMouse ? new Vector3(0.0f, 1.0f, 0.0f) : new Vector3(1.0f, 0.0f, 0.0f);
+                    Debug.Log(hit.triangleIndex);
+                    _copyBuffer.SetValue(v, mesh.triangles[3*hit.triangleIndex]);
+                    _copyBuffer.SetValue(v, mesh.triangles[3*hit.triangleIndex+1]);
+                    _copyBuffer.SetValue(v, mesh.triangles[3*hit.triangleIndex+2]);
+                }
+            }
             _inputColorBuffer.SetData(_copyBuffer);
 
             // _outputColorBuffer.GetData(_color);
