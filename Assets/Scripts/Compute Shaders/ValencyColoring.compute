@@ -1,0 +1,25 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma editor_sync_compilation
+#define THREAD_GROUP_SIZE 128
+
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+RWStructuredBuffer<float3> _inputMesh;
+RWStructuredBuffer<float3> _outputMesh;
+// RWTexture2D<int> ;
+RWTexture3D
+
+
+
+#pragma kernel CSMain
+[numthreads(THREAD_GROUP_SIZE,1,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    uint uid = id.x;
+    float3 translation = float3(1.0,1.0,1.0);
+    // TODO: insert actual code here!
+    float3 vertex = _inputMesh[uid];
+
+    _outputMesh[uid] = translation + vertex;
+}
