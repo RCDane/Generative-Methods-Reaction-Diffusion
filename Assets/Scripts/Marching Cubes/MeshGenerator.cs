@@ -22,8 +22,9 @@ public class MeshGenerator : MonoBehaviour
 		mesh = new Mesh();
 		terrainMap = new float[width + 1, width + 1, width + 1];
 
-		PopulateTerrainMap();
-		// ImplicitSurface(Vector3.one * (width / 2), 8.0f);
+		// PopulateTerrainMap();
+		// ImplicitSurface_Sphere(Vector3.one * (width / 2), 8.0f);
+		ImplicitSurface_Torus(Vector3.one * (width / 2), 10.0f, 1.0f);
 		CreateMeshData();
 		GetComponent<MeshFilter>().mesh = mesh;
 
@@ -97,7 +98,7 @@ public class MeshGenerator : MonoBehaviour
 		}
 	}
 
-	void ImplicitSurface(Vector3 pos, float radius)
+	void ImplicitSurface_Sphere(Vector3 pos, float radius)
 	{
 		// The data points for terrain are stored at the corners of our "cubes", so the terrainMap needs to be 1 larger
 		// than the width/width of our mesh.
@@ -111,6 +112,29 @@ public class MeshGenerator : MonoBehaviour
 
 					// Set the value of this point in the terrainMap.
 					terrainMap[x, y, z] = diff.magnitude - radius;
+
+				}
+			}
+		}
+	}
+
+	void ImplicitSurface_Torus(Vector3 pos, float size_radius, float radius)
+	{
+		// The data points for terrain are stored at the corners of our "cubes", so the terrainMap needs to be 1 larger
+		// than the width/width of our mesh.
+		for (int x = 0; x <= width; x++)
+		{
+			for (int z = 0; z <= width; z++)
+			{
+				for (int y = 0; y <= width; y++)
+				{
+					Vector3 diff = new Vector3(x,y,z) - pos;
+
+					// Set the value of this point in the terrainMap.
+					// terrainMap[x, y, z] = diff.magnitude - radius;
+					Vector2 xz = new Vector2(diff.x, diff.z);
+					Vector2 q = new Vector2(xz.magnitude - size_radius, diff.y);
+					terrainMap[x, y, z] = q.magnitude - radius;
 
 				}
 			}
