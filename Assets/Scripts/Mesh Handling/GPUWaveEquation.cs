@@ -59,16 +59,16 @@ public class GPUWaveEquation : MonoBehaviour
         _vertices = mesh.vertices;
         _dispatchSize = CalculateKernelSize((int)sizeX, _vertices.Length);
 
-        List<int>[] neighbors;
+        int[][] neighbors;
         (neighbors, _valence) = GeometryUtilities.FindNeighbors(mesh, out _maxValency);
 
         _vertexNeighbors = new int[mesh.vertexCount*_maxValency];
         for (int i = 0; i < mesh.vertexCount; i++)
         {
-            List<int> neigh = neighbors[i];
+            int[] neigh = neighbors[i];
             for (int j = 0; j < _maxValency; j++)
             {
-                if (j < neigh.Count)
+                if (j < neigh.Length)
                 {
                     _vertexNeighbors[i*_maxValency+j] = neigh[j];
                 }

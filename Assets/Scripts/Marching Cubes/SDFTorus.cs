@@ -62,12 +62,16 @@ public class SDFTorus : SDFObject
         
     }
 
-
+    private Quaternion InverseRotation;
+    private bool InverseRotationCalculated = false;
     public override float Evaluate(Vector3 pos)
 	{
-		Quaternion LocalRotation = Quaternion.Inverse(transform.localRotation);
+        if (!InverseRotationCalculated){
+            InverseRotation = Quaternion.Inverse(transform.localRotation);
+            InverseRotationCalculated = true;
+        }
 
-		Vector3 rotatedPosition = LocalRotation * (pos - transform.position);
+		Vector3 rotatedPosition = InverseRotation * (pos - transform.position);
         rotatedPosition += transform.position;
         float R = (outerRadius + innerRadius) * 0.5f;  // Major radius
         float r = (outerRadius - innerRadius) * 0.5f;  // Minor radius

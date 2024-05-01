@@ -10,8 +10,8 @@ public class MeshGenerator : MonoBehaviour
 {
 	Mesh mesh;
 
-	List<Vector3> vertices = new List<Vector3>();
-	List<int> triangles = new List<int>();
+	List<Vector3> vertices;
+	List<int> triangles;
 
 	float terrainSurface = 0.5f;
 	public int width = 32;
@@ -32,6 +32,7 @@ public class MeshGenerator : MonoBehaviour
 	{
 		print("MeshGenerator Start");
 		mesh = new Mesh();
+		mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
 		terrainMap = new float[width + 1, width + 1, width + 1];
 		for (int i = 0; i <= width; i++){
 			for (int j = 0; j <= width; j++){
@@ -40,10 +41,15 @@ public class MeshGenerator : MonoBehaviour
 				}
 			}
 		}
+		vertices = new List<Vector3>(50000);
+		triangles = new List<int>(50000);
 		// PopulateTerrainMap();
 		CalculateBounds();
 		EvaluateShape();
 		CreateMeshData();
+		print(mesh.vertexCount);
+		print(mesh.GetIndexCount(0));
+
 		GetComponent<MeshFilter>().mesh = mesh;
 
 	}
@@ -304,7 +310,8 @@ public class MeshGenerator : MonoBehaviour
 	int VertForIndice (Vector3 vert) {
 
         // Loop through all the vertices currently in the vertices list.
-        for (int i = 0; i < vertices.Count; i++) {
+		int count = vertices.Count;
+        for (int i = 0; i < count; i++) {
 
             // If we find a vert that matches ours, then simply return this index.
             if (vertices[i] == vert)

@@ -27,15 +27,17 @@ public class GPULaplacian : MonoBehaviour
         meshFilter = GetComponent<MeshFilter>();
         meshFilter.mesh = GeometryUtilities.CombineVertices(meshFilter.mesh, 0.0001f);
         mesh = meshFilter.mesh;
+        Vector3[] vertices = mesh.vertices;
 
         // TODO: temp uv fix
         float maxX = mesh.vertices.Max(x => x.x);
         float maxY = mesh.vertices.Max(x => x.y);
         float maxZ = mesh.vertices.Max(x => x.z);
         Vector2[] uv = new Vector2[mesh.vertices.Length];
-        for (int i = 0; i < mesh.vertices.Length; i++)
+        int vertexCount = mesh.vertices.Length;
+        for (int i = 0; i < vertexCount; i++)
         {
-            Vector3 v = mesh.vertices[i];
+            Vector3 v = vertices[i];
             uv[i] = new Vector2(v.x / maxX, v.y*v.z / (maxY*maxZ));
         }
         mesh.uv = uv;
@@ -73,16 +75,16 @@ public class GPULaplacian : MonoBehaviour
         _vertices = mesh.vertices;
         _dispatchSize = CalculateKernelSize((int)sizeX, _vertices.Length);
 
-        List<int>[] neighbors;
+        int[][] neighbors;
         (neighbors, _valence) = GeometryUtilities.FindNeighbors(mesh, out _maxValency);
 
         _vertexNeighbors = new int[mesh.vertexCount*_maxValency];
         for (int i = 0; i < mesh.vertexCount; i++)
         {
-            List<int> neigh = neighbors[i];
+            int[] neigh = neighbors[i];
             for (int j = 0; j < _maxValency; j++)
             {
-                if (j < neigh.Count)
+                if (j < neigh.Length)
                 {
                     _vertexNeighbors[i*_maxValency+j] = neigh[j];
                 }

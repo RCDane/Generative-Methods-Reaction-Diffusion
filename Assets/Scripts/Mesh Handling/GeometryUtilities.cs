@@ -20,8 +20,8 @@ public class GeometryUtilities
     {
         Vector3[] positions = mesh.vertices;
         int[] vertexIndices = mesh.GetIndices(0);
-        List<Vector3> newVertices = new List<Vector3>();
-        Dictionary<int, int> indexMap = new Dictionary<int, int>();
+        List<Vector3> newVertices = new List<Vector3>(positions.Length);
+        Dictionary<int, int> indexMap = new Dictionary<int, int>(vertexIndices.Length);
         float sqrThreshold = threshold * threshold;
 
         for (int i = 0; i < positions.Length; i++)
@@ -87,11 +87,11 @@ public class GeometryUtilities
     //     return neighborsList;
     // }
 
-    public static (List<int>[], int[]) FindNeighbors(Mesh mesh, out int maxValence)
+    public static (int[][], int[]) FindNeighbors(Mesh mesh, out int maxValence)
     {
         int vertexCount = mesh.vertexCount;
         int[] triangles = mesh.triangles;
-        List<int>[] neighborsList = new List<int>[vertexCount]; //Enumerable.Range(0, vertexCount).Select(_ => new List<int>()).ToArray();
+        int[][] neighborsList = new int[vertexCount][]; //Enumerable.Range(0, vertexCount).Select(_ => new List<int>()).ToArray();
         int[] valence = new int[vertexCount];
         List<int3>[] faces = Enumerable.Range(0, vertexCount).Select(_ => new List<int3>()).ToArray();
         for (int i = 0; i < triangles.Length; i += 3)
@@ -107,12 +107,12 @@ public class GeometryUtilities
         maxValence = 0;
         for (int i = 0; i < vertexCount; i++){
             List<int3> nfaces = faces[i];
-            neighborsList[i] = new List<int>(nfaces.Count);
+            neighborsList[i] = new int[nfaces.Count];
             int curr = 0;
             for (int j = 0; j < nfaces.Count; j++)
             {
                 int3 face = nfaces[curr];
-                neighborsList[i].Add(face[1]);
+                neighborsList[i][j] = face[1];
                 int k = 0;
                 for (; k < nfaces.Count; k++)
                 {
@@ -128,8 +128,8 @@ public class GeometryUtilities
                 }
                 curr = k;
             }
-            valence[i] = neighborsList[i].Count;
-            maxValence = math.max(neighborsList[i].Count, maxValence);
+            valence[i] = neighborsList[i].Length;
+            maxValence = math.max(neighborsList[i].Length, maxValence);
         }
         
         return (neighborsList, valence);

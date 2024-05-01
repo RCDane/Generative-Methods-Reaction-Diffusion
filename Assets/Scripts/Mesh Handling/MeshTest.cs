@@ -14,7 +14,7 @@ public class MeshTest : MonoBehaviour
 
     Mesh _mesh;
 
-    List<int>[] _neighbors;
+    int[][] _neighbors;
 
     ComputeBuffer _ColorBuffer;
     ComputeBuffer _NeighborBuffer;
@@ -67,7 +67,7 @@ public class MeshTest : MonoBehaviour
         var buffer = _NeighborBuffer.BeginWrite<int>(0, _valence*_neighbors.Length);
         for (int i = 0; i < _neighbors.Length; i++)
         {
-            int currentValence = _neighbors[i].Count;
+            int currentValence = _neighbors[i].Length;
             for (int j = 0; j < _valence; j++){
                 
                 int index = i*_valence+j;

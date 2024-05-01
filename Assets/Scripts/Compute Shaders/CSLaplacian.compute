@@ -4,7 +4,7 @@
 
 #define EPSILON 0.000001
 
-#define DT 0.1
+#define DT 0.05
 
 // Create a RenderTexture with enableRandomWrite flag and set it
 // with cs.SetTexture
@@ -72,7 +72,7 @@ void CSLaplacian (uint3 id : SV_DispatchThreadID)
     float g = min(1.0, max(0.0, min(inputColor.b, lap.g*DT)));
     float r = min(1.0, max(0.0, min(inputColor.g, lap.r*DT)));
     float3 res = inputColor + float3(0.0, g, -g) + float3(r, -r, 0.0);
-    res = res*float3(0.99, 1.0, 1.0);
+    res = res*float3(0.996, 1.0, 1.0);
     if (res.r < 0.0025) res.r = 0.0;
     _outputColors[uid] = res;
 
