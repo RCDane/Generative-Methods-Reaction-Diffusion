@@ -2,7 +2,6 @@ Shader "Unlit/ValanceColoring"
 {
     Properties
     {
-        _RedTex ("RedTexture", 2D) = "red" {}
         _GreenTex ("GreenTexture", 2D) = "bump" {}
         _BlueTex ("BlueTexture", 2D) = "gray" {}
         _BlackTex ("BlackTexture", 2D) = "black" {}
@@ -45,18 +44,16 @@ Shader "Unlit/ValanceColoring"
                 return o;
             }
 
-            sampler2D _RedTex;
             sampler2D _GreenTex;
             sampler2D _BlueTex;
             sampler2D _BlackTex;
 
             fixed4 frag (v2f i) : SV_Target
             {
-                float4 r = i.color.r*tex2D(_RedTex, i.uv);
                 float4 g = i.color.g*tex2D(_GreenTex, i.uv);
                 float4 b = i.color.b*tex2D(_BlueTex, i.uv);
-                float4 z = max(0.0, (1 - i.color.r - i.color.g - i.color.b))*tex2D(_BlackTex, i.uv);
-                return r+g+b+z;
+                float4 z = max(0.0, (1 - i.color.g - i.color.b))*tex2D(_BlackTex, i.uv);
+                return g+b+z;
             }
             ENDCG
         }
