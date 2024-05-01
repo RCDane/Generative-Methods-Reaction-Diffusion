@@ -3,6 +3,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using TMPro;
+using Unity.Mathematics;
 
 [RequireComponent(typeof(MeshFilter))]
 public class MeshGenerator : MonoBehaviour
@@ -20,24 +21,63 @@ public class MeshGenerator : MonoBehaviour
 
 	float[,,] terrainMap;
 
+	Vector3 boundsCenter;
+	Vector3 boundsSize;
+
+
+	public List<SDFObject> sDFObjects;
+
 	// Start is called once before the first execution of Update after the MonoBehaviour is created
 	void Start()
 	{
 		print("MeshGenerator Start");
 		mesh = new Mesh();
 		terrainMap = new float[width + 1, width + 1, width + 1];
-
+		for (int i = 0; i <= width; i++){
+			for (int j = 0; j <= width; j++){
+				for (int k = 0; k <=width; k++){
+					terrainMap[i,j,k] = float.MaxValue;
+				}
+			}
+		}
 		// PopulateTerrainMap();
-		ImplicitSurface_Torus(Vector3.one * (width / 2), 8.0f, 2.0f);
+		CalculateBounds();
+		EvaluateShape();
 		CreateMeshData();
 		GetComponent<MeshFilter>().mesh = mesh;
 
 	}
+	// Calculate bounds around objects we are creating. Used so that our mesh resolution can be dynamic
+	void CalculateBounds(){
 
+		boundsCenter = Vector3.zero;
+		boundsSize = Vector3.zero;
+		Vector3 scaleMin = Vector3.one*float.MaxValue;
+		Vector3 scaleMax = Vector3.one*float.MinValue;
+		for (int i = 0; i < sDFObjects.Count; i++)
+		{
+			Vector3 min, max;
+			(min, max) = sDFObjects[i].Bounds();
+			scaleMin = Vector3.Min(scaleMin, min);
+			scaleMax = Vector3.Max(scaleMax, max);
+		}
+
+
+		scaleMax += Vector3.one;
+		scaleMin -= Vector3.one;
+		boundsCenter = (scaleMin+ scaleMax)/2f;
+		boundsSize = (boundsCenter - scaleMax);
+		boundsSize = new Vector3(Mathf.Abs(boundsSize.x),Mathf.Abs(boundsSize.y),Mathf.Abs(boundsSize.z))*2.0f;
+		// Add some padding
+		
+	}
 	void CreateMeshData()
 	{
 
 		// ClearMeshData();
+		Vector3 from = boundsCenter - boundsSize/2;
+		Vector3 to = boundsCenter + boundsSize/2;
+		Vector3 stepSize = (to-from)/width;
 
 		// Loop through each "cube" in our terrain.
 		for (int x = 0; x < width; x++)
@@ -51,7 +91,8 @@ public class MeshGenerator : MonoBehaviour
 					float[] cube = new float[8];
 					for (int i = 0; i < 8; i++)
 					{
-
+						
+						
 						Vector3 corner = new Vector3(x, y, z) + CornerTable[i];
 						cube[i] = terrainMap[(int)corner.x, (int)corner.y, (int)corner.z];
 
@@ -102,47 +143,42 @@ public class MeshGenerator : MonoBehaviour
 		}
 	}
 
-	void ImplicitSurface_Sphere(Vector3 pos, float radius)
+	
+
+	void EvaluateShape()
 	{
 		// The data points for terrain are stored at the corners of our "cubes", so the terrainMap needs to be 1 larger
 		// than the width/width of our mesh.
+		Vector3 boundsOffset = boundsCenter;
+		Vector3 boundsSizeCorrected = boundsSize - Vector3.one;
+		Vector3 from = boundsCenter - boundsSize/2;
+		Vector3 to = boundsCenter + boundsSize/2;
+		Vector3 fromCorrected = boundsCenter - boundsSizeCorrected/2;
+		Vector3 toCorrected = boundsCenter + boundsSizeCorrected/2;
 		for (int x = 0; x <= width; x++)
 		{
 			for (int z = 0; z <= width; z++)
 			{
 				for (int y = 0; y <= width; y++)
 				{
-					Vector3 diff = new Vector3(x,y,z) - pos;
+					
 
-					// Set the value of this point in the terrainMap.
-					terrainMap[x, y, z] = diff.magnitude - radius;
+					Vector3 point = new Vector3(x, y, z)/width;
+					point = from+Vector3.Scale(to-from, point);
 
+					Vector3 correctedPoint = fromCorrected + 
+								Vector3.Scale(toCorrected- fromCorrected, point);
+					
+					for (int i = 0; i < sDFObjects.Count; i++)
+					{
+						float value = sDFObjects[i].Evaluate(point);
+						terrainMap[x, y, z] = Mathf.Min(terrainMap[x, y, z], value);
+					}
 				}
 			}
 		}
-	}
-
-	void ImplicitSurface_Torus(Vector3 pos, float size_radius, float radius)
-	{
-		// The data points for terrain are stored at the corners of our "cubes", so the terrainMap needs to be 1 larger
-		// than the width/width of our mesh.
-		for (int x = 0; x <= width; x++)
-		{
-			for (int z = 0; z <= width; z++)
-			{
-				for (int y = 0; y <= width; y++)
-				{
-					Vector3 diff = new Vector3(x,y,z) - pos;
-
-					// Set the value of this point in the terrainMap.
-					// terrainMap[x, y, z] = diff.magnitude - radius;
-					Vector2 xz = new Vector2(diff.x, diff.z);
-					Vector2 q = new Vector2(xz.magnitude - size_radius, diff.y);
-					terrainMap[x, y, z] = q.magnitude - radius;
-
-				}
-			}
-		}
+		
+		print("test");
 	}
 
 	void MarchCube(Vector3 position, float[] cube)
@@ -155,6 +191,10 @@ public class MeshGenerator : MonoBehaviour
 		if (configIndex == 0 || configIndex == 255)
 			return;
 
+		Vector3 from = boundsCenter - boundsSize/2;
+		Vector3 to = boundsCenter + boundsSize/2;
+
+		
 		// Loop through the triangles. There are never more than 5 triangles to a cube and only three vertices to a triangle.
 		int edgeIndex = 0;
 		for (int i = 0; i < 5; i++)
@@ -184,7 +224,11 @@ public class MeshGenerator : MonoBehaviour
 				// Add to our vertices and triangles list and incremement the edgeIndex.
 				// vertices.Add(vertPosition);
 				// triangles.Add(vertices.Count() - 1);
-				triangles.Add(VertForIndice(vertPosition));
+				Vector3 point = vertPosition/width;
+				point = from+Vector3.Scale(to-from, point);
+				
+
+				triangles.Add(VertForIndice(point));
 				edgeIndex++;
 
 			}
@@ -218,12 +262,43 @@ public class MeshGenerator : MonoBehaviour
 	void UpdateMesh()
 	{
 		mesh.Clear();
-
+		// ResizeMesh();
 		mesh.vertices = vertices.ToArray();
 		mesh.triangles = triangles.ToArray();
+
 		mesh.RecalculateNormals();
 		mesh.RecalculateBounds();
 		GetComponent<MeshCollider>().sharedMesh = mesh;   
+	}
+
+	void ResizeMesh(){
+		Vector3 fromMin = Vector3.zero;
+		Vector3 fromMax =  Vector3.one* width;
+		Vector3 toMin = Vector3.zero;
+		Vector3 toMax = new Vector3(scale.x * width, scale.y * width, scale.z * width);
+
+		Vector3 half = (toMax - toMin) / 2;
+		for (int i = 0; i < vertices.Count; i++)
+		{
+			
+			Vector3 interpolatedPosition = vertices[i] / width;
+			interpolatedPosition = Vector3.Scale(interpolatedPosition, toMax);
+			interpolatedPosition -= half;
+			vertices[i] = interpolatedPosition;
+		}
+	}
+	
+	void OnDrawGizmos(){
+		Gizmos.color = Color.blue;
+		CalculateBounds();
+
+
+
+
+		print("Middle off bounds: "+ boundsCenter);
+		print("bounds size" + boundsSize);
+		Gizmos.DrawWireCube(boundsCenter,boundsSize);
+	
 	}
 
 	int VertForIndice (Vector3 vert) {
