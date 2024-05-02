@@ -5,6 +5,7 @@ using Unity.VisualScripting;
 using TMPro;
 using Unity.Mathematics;
 
+
 [RequireComponent(typeof(MeshFilter))]
 public class MeshGenerator : MonoBehaviour
 {
@@ -41,18 +42,48 @@ public class MeshGenerator : MonoBehaviour
 				}
 			}
 		}
+		
 		vertices = new List<Vector3>(50000);
 		triangles = new List<int>(50000);
 		// PopulateTerrainMap();
 		CalculateBounds();
 		EvaluateShape();
 		CreateMeshData();
+
 		print(mesh.vertexCount);
 		print(mesh.GetIndexCount(0));
 
 		GetComponent<MeshFilter>().mesh = mesh;
 
 	}
+
+	float Evaluate(Vector3 pos){
+		float min = float.MaxValue;
+		foreach (SDFObject obj in sDFObjects){
+			float value = obj.Evaluate(pos);
+			min = Mathf.Min(min, value);
+		}
+		return min;
+	}
+
+	private Vector3[] CalculateNormals(){
+		Vector3[] normals = new Vector3[vertices.Count];
+		float eps = 0.0001f;
+		 float2 h = new Vector2(eps, 0);
+		for (int i = 0; i < vertices.Count; i+=3){
+			// Normals are calculated by taking the gradient of the SDF function at the point.
+			// We exploit the fact that at p the gradient should be 0. https://iquilezles.org/articles/normalsSDF/ 
+			Vector3 p = vertices[triangles[i]];
+			Vector3 normal = new Vector3(
+				Evaluate(p + new Vector3(eps,0,0)),
+				Evaluate(p + new Vector3(0,eps,0)),
+				Evaluate(p + new Vector3(0,0,eps))
+			);
+			normals[triangles[i]] = normal;
+		}
+		return normals;
+	}
+
 	// Calculate bounds around objects we are creating. Used so that our mesh resolution can be dynamic
 	void CalculateBounds(){
 
@@ -272,7 +303,8 @@ public class MeshGenerator : MonoBehaviour
 		mesh.vertices = vertices.ToArray();
 		mesh.triangles = triangles.ToArray();
 
-		mesh.RecalculateNormals();
+		// mesh.RecalculateNormals();
+		mesh.normals = CalculateNormals();
 		mesh.RecalculateBounds();
 		GetComponent<MeshCollider>().sharedMesh = mesh;   
 	}

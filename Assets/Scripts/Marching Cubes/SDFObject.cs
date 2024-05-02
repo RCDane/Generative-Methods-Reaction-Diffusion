@@ -8,4 +8,5 @@ public abstract class SDFObject : MonoBehaviour
     public abstract (Vector3, Vector3) Bounds();
 
     public abstract float Evaluate(Vector3 point);
+    
 }

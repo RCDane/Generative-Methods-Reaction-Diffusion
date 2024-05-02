@@ -24,7 +24,7 @@ float cotan_angle(float3 pi, float3 pj, float3 pk)
     return 1 / (x + EPSILON);
 }
 
-int mod(int x, int m) {
+uint mod(uint x, uint m) {
     return (x % m + m) % m;
 }
 
@@ -46,8 +46,8 @@ void CSLaplacian (uint3 id : SV_DispatchThreadID)
         float3 ka = _inputMesh[_inputVertexNeighbours[uid*_inputMaxValence+mod((i-1),valence)]];
         float3 kb = _inputMesh[_inputVertexNeighbours[uid*_inputMaxValence+mod((i+1),valence)]];
         float3 neighborColor = _inputColors[neighbor];
-        float a = cotan_angle(pi, pj, ka);
-        float b = cotan_angle(pi, pj, kb);
+        float a = max(cotan_angle(pi, pj, ka), 0.0);
+        float b = max(cotan_angle(pi, pj, kb), 0.0);
         float ab = a + b;
         weights += ab;
         lap += ab*neighborColor;

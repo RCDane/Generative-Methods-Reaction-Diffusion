@@ -49,6 +49,7 @@ public class GPULaplacian : MonoBehaviour
 
         _visualEffect = GetComponent<VisualEffect>();
         _visualEffect.SetMesh("Mesh", mesh);
+        
         Setup();
     }
 
