@@ -1,6 +1,6 @@
 // Each #kernel tells which function to compile; you can have many kernels
 #pragma editor_sync_compilation
-#define THREAD_GROUP_SIZE 32
+#define THREAD_GROUP_SIZE 128
 
 #define EPSILON 0.000001
 
