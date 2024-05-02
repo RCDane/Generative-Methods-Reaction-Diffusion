@@ -2,6 +2,7 @@ Shader "Unlit/ValanceColoring"
 {
     Properties
     {
+        _RedTex ("RedTexture", 2D) = "red" {}
         _GreenTex ("GreenTexture", 2D) = "bump" {}
         _BlueTex ("BlueTexture", 2D) = "gray" {}
         _BlackTex ("BlackTexture", 2D) = "black" {}
@@ -78,6 +79,7 @@ Shader "Unlit/ValanceColoring"
                 return o;
             }
 
+            sampler2D _RedTex;
             sampler2D _GreenTex;
             sampler2D _BlueTex;
             sampler2D _BlackTex;
@@ -94,15 +96,16 @@ Shader "Unlit/ValanceColoring"
                 TriplanarUV triUV = GetTriplanarUV(i.worldVertex.xyz, i.normal);
                 float3 triW = GetTriplanarWeights(i.normal);
                 
-                
+                float4 red = float4(TriplanarLoopup(_RedTex, triUV, triW), 1.0);                
                 float4 green = float4(TriplanarLoopup(_GreenTex, triUV, triW), 1.0);
                 float4 blue = float4(TriplanarLoopup(_BlueTex, triUV, triW),1.0);
                 float4 black = float4(TriplanarLoopup(_BlackTex, triUV, triW),1.0);
 
+                float4 r = i.color.r*red;
                 float4 g = i.color.g*green;
                 float4 b = i.color.b*blue;
-                float4 z = max(0.0, (1 - i.color.g - i.color.b))*black;
-                return g+b+z;
+                float4 z = max(0.0, (1 - i.color.r - i.color.g - i.color.b))*black;
+                return r+g+b+z;
                 // return float4(triUV.x, 0.0,1.0);
                 // return i.vertex;
             }

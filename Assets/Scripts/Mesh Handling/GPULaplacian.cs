@@ -29,26 +29,16 @@ public class GPULaplacian : MonoBehaviour
         meshFilter = GetComponent<MeshFilter>();
         meshFilter.mesh = GeometryUtilities.CombineVertices(meshFilter.mesh, 0.0001f);
         mesh = meshFilter.mesh;
-        Vector3[] vertices = mesh.vertices;
 
-        // TODO: temp uv fix
-        int vertexCount = vertices.Length;
-        float maxX = vertices.Max(x => x.x);
-        float maxY = vertices.Max(x => x.y);
-        float maxZ = vertices.Max(x => x.z);
-        Vector2[] uv = new Vector2[vertexCount];
-        for (int i = 0; i < vertexCount; i++)
-        {
-            Vector3 v = vertices[i];
-            uv[i] = new Vector2(v.x / maxX, v.y*v.z / (maxY*maxZ));
-        }
-        mesh.uv = uv;
         meshFilter.sharedMesh = mesh;
 
         GPUColorMat = GetComponent<Renderer>().material;
 
-        _visualEffect = GetComponent<VisualEffect>();
-        _visualEffect.SetMesh("Mesh", mesh);
+
+        if (TryGetComponent<VisualEffect>(out _visualEffect))
+        {
+            _visualEffect.SetMesh("Mesh", mesh);
+        }
         
         Setup();
     }
@@ -134,11 +124,11 @@ public class GPULaplacian : MonoBehaviour
         computeShader.SetBuffer(_kernel, inputValence, _valenceBuffer);
 
         GPUColorMat.SetBuffer("_ColorBuffer", _outputColorBuffer);
-        _visualEffect.SetGraphicsBuffer("_ColorBuffer", _outputColorBuffer);
+        _visualEffect?.SetGraphicsBuffer("_ColorBuffer", _outputColorBuffer);
 
         _normalBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Vertex, _vertices.Length, 3*sizeof(float));
         _normalBuffer.SetData(mesh.normals);
-        _visualEffect.SetGraphicsBuffer("_normalBuffer", _normalBuffer);
+        _visualEffect?.SetGraphicsBuffer("_normalBuffer", _normalBuffer);
 
 
         _copyBuffer = new Vector3[_vertices.Length];

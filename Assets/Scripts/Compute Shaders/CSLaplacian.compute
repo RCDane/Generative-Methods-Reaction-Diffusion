@@ -2,7 +2,7 @@
 #pragma editor_sync_compilation
 #define THREAD_GROUP_SIZE 128
 
-#define EPSILON 0.000001
+#define EPSILON 0.000000001
 
 #define DT 0.1
 
@@ -53,9 +53,9 @@ void CSLaplacian (uint3 id : SV_DispatchThreadID)
         lap += ab*neighborColor;
         float3 ij = pj - pi;
         float3 ik = ka - pi;
-        float ar = length(cross(ij, ik));
+        float ar = max(0, length(cross(ij, ik)));
         float angle = asin(ar / (length(ij) * length(ik) + EPSILON));
-        area += ar*angle;
+        area += 0.5*ar*angle;
     }
 
     const float3 e = float3(1, -1, 0);
@@ -70,16 +70,17 @@ void CSLaplacian (uint3 id : SV_DispatchThreadID)
 
     lap /= weights;
     // lap -= weights*inputColor;
-    // lap /= area;
+    // lap /= area/3.14159265 + EPSILON;
+    // lap = max(0.0, lap);
     // lap = max(0, lap);
     // float g = min(inputColor.b, lap.g)*DT;
     // float r = min(inputColor.g, lap.r)*DT;
-    float2 factor = float2(0.75, 1.0);
+    float2 factor = float2(1.0, 1.0);
     float g = min(inputColor.b, factor.g*lap.g*DT);
     float r = min(inputColor.g, factor.r*lap.r*DT);
     float3 res = inputColor + float3(0.0, g, -g) + float3(r, -r, 0.0);
-    res = res*float3(0.99, 1.0, 1.0);
-    if (res.r < 0.0025) res.r = 0.0;
+    res = res*float3(0.995, 1.0, 1.0);
+    if (res.r < 0.00001) res.r = 0.0;
     _outputColors[uid] = res;
 
     // lap -= weights*inputColor;
