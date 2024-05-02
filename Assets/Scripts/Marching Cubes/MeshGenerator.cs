@@ -79,7 +79,7 @@ public class MeshGenerator : MonoBehaviour
 				Evaluate(p + new Vector3(0,eps,0)),
 				Evaluate(p + new Vector3(0,0,eps))
 			);
-			normals[triangles[i]] = normal;
+			normals[triangles[i]] = normal.normalized;
 		}
 		return normals;
 	}
@@ -203,8 +203,8 @@ public class MeshGenerator : MonoBehaviour
 					Vector3 point = new Vector3(x, y, z)/width;
 					point = from+Vector3.Scale(to-from, point);
 
-					Vector3 correctedPoint = fromCorrected + 
-								Vector3.Scale(toCorrected- fromCorrected, point);
+					// Vector3 correctedPoint = fromCorrected + 
+					// 			Vector3.Scale(toCorrected- fromCorrected, point);
 					
 					for (int i = 0; i < sDFObjects.Count; i++)
 					{
