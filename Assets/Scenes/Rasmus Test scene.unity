@@ -418,7 +418,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f157a2bd0a239294c983cd883e44c6c1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  width: 32
+  width: 25
   scale: {x: 0.2, y: 0.2, z: 0.2}
   sDFObjects:
   - {fileID: 1049480036}
