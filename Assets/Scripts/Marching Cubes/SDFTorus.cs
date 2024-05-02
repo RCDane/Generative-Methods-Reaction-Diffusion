@@ -87,8 +87,8 @@ public class SDFTorus : SDFObject
 
     void DrawRing(Vector3 position, Vector3 offset, float scale){
         Vector3 oldPosition = Vector3.zero;
-        for (int i = -1; i < 10; i++){
-            float angle = i * Mathf.PI * 2 / 10;
+        for (int i = -1; i < 20; i++){
+            float angle = i * Mathf.PI * 2 / 20;
             Vector3 newPosition = new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle));
             newPosition = newPosition * scale;
             
