@@ -306,6 +306,7 @@ public class MeshGenerator : MonoBehaviour
 		// mesh.RecalculateNormals();
 		mesh.normals = CalculateNormals();
 		mesh.RecalculateBounds();
+		mesh.RecalculateTangents();
 		GetComponent<MeshCollider>().sharedMesh = mesh;   
 	}
 
