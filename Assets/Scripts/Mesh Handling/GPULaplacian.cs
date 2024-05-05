@@ -29,7 +29,6 @@ public class GPULaplacian : MonoBehaviour
         meshFilter = GetComponent<MeshFilter>();
         meshFilter.mesh = GeometryUtilities.CombineVertices(meshFilter.mesh, 0.0001f);
         mesh = meshFilter.mesh;
-
         meshFilter.sharedMesh = mesh;
 
         GPUColorMat = GetComponent<Renderer>().material;
@@ -162,11 +161,14 @@ public class GPULaplacian : MonoBehaviour
                 ray = Camera.main.ScreenPointToRay(Input.mousePosition);
                 if (Physics.Raycast(ray, out hit))
                 {
-                    Vector3 v = leftMouse ? new Vector3(0.0f, 1.0f, 0.0f) : new Vector3(1.0f, 0.0f, 0.0f);
                     Debug.Log(hit.triangleIndex);
-                    _copyBuffer.SetValue(v, mesh.triangles[3*hit.triangleIndex]);
-                    _copyBuffer.SetValue(v, mesh.triangles[3*hit.triangleIndex+1]);
-                    _copyBuffer.SetValue(v, mesh.triangles[3*hit.triangleIndex+2]);
+                    // if (hit.triangleIndex >= 0)
+                    {
+                        Vector3 v = leftMouse ? new Vector3(0.0f, 1.0f, 0.0f) : new Vector3(1.0f, 0.0f, 0.0f);
+                        _copyBuffer.SetValue(v, mesh.triangles[3*hit.triangleIndex]);
+                        _copyBuffer.SetValue(v, mesh.triangles[3*hit.triangleIndex+1]);
+                        _copyBuffer.SetValue(v, mesh.triangles[3*hit.triangleIndex+2]);
+                    }
                 }
             }
             _inputColorBuffer.SetData(_copyBuffer);

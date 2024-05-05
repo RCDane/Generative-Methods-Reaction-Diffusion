@@ -19,8 +19,10 @@ public class GeometryUtilities
     public static Mesh CombineVertices(Mesh mesh, float threshold)
     {
         Vector3[] positions = mesh.vertices;
+        Vector4[] tangents = mesh.tangents;
         int[] vertexIndices = mesh.GetIndices(0);
         List<Vector3> newVertices = new List<Vector3>(positions.Length);
+        List<Vector4> newTangents = new List<Vector4>(positions.Length);
         Dictionary<int, int> indexMap = new Dictionary<int, int>(vertexIndices.Length);
         float sqrThreshold = threshold * threshold;
 
@@ -29,8 +31,10 @@ public class GeometryUtilities
             if (indexMap.ContainsKey(i)) continue;  // This vertex has already been merged
 
             Vector3 currentVertex = positions[i];
+            Vector3 currentTangent = tangents[i];
             int newIndex = newVertices.Count;
             newVertices.Add(currentVertex);
+            newTangents.Add(currentTangent);
             indexMap[i] = newIndex;
 
             for (int j = i + 1; j < positions.Length; j++)
@@ -50,9 +54,11 @@ public class GeometryUtilities
 
         Mesh newMesh = new Mesh();
         newMesh.vertices = newVertices.ToArray();
+        newMesh.tangents = newTangents.ToArray();
         newMesh.SetIndices(newVertexIndices, mesh.GetTopology(0), 0);
         newMesh.RecalculateBounds();
         newMesh.RecalculateNormals();
+        // newMesh.RecalculateTangents();
         return newMesh;
     }
 
