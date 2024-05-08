@@ -62,6 +62,55 @@ public class GeometryUtilities
         return newMesh;
     }
 
+    public static Mesh WeldVertices(Mesh mesh, float threshold = 0.01f)
+    {
+        Vector3[] vertices = mesh.vertices;
+        Vector3[] normals = mesh.normals;
+        Vector4[] tangents = mesh.tangents;
+        Dictionary<Vector3, int> set = new Dictionary<Vector3, int>();
+        List<int> indices = new List<int>();
+        int[] map = new int[vertices.Length];
+
+        for (int i = 0; i < vertices.Length; i++)
+        {
+            if (!set.ContainsKey(vertices[i]))
+            {
+                set.Add(vertices[i], indices.Count);
+                map[i] = indices.Count;
+                indices.Add(i);
+            }
+            else
+            {
+                map[i] = set[vertices[i]];
+            }
+        }
+
+        Vector3[] newVertices = new Vector3[indices.Count];
+        Vector3[] newNormals = new Vector3[indices.Count];
+        Vector4[] newTangents = new Vector4[indices.Count];
+        for (int i = 0; i < indices.Count; i++)
+        {
+            int index = indices[i];
+            newVertices[i] = vertices[index];
+            newNormals[i] = normals[index];
+            newTangents[i] = tangents[index];
+        }
+        int[] newTriangles = mesh.triangles;
+        for (int i = 0; i < newTriangles.Length; i++)
+        {
+            newTriangles[i] = map[newTriangles[i]];
+        }
+        mesh.triangles = newTriangles;
+        mesh.vertices = newVertices;
+        mesh.normals = newNormals;
+        mesh.tangents = newTangents;
+
+        mesh.RecalculateBounds();
+        mesh.RecalculateNormals();
+
+        return mesh;
+    }
+
     // public static List<int>[]  FindNeighbors(Mesh mesh, out int maxValence){
     //     int[] faces = mesh.triangles;
     //     int vertexCount = mesh.vertexCount;
