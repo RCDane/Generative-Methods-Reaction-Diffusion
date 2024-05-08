@@ -53,19 +53,19 @@ public class SDFOctahedron : SDFObject
 
     void OnDrawGizmos(){
         Gizmos.color = Color.red;
-        Gizmos.DrawLine(transform.position + new Vector3(-height, 0, -height), transform.position + new Vector3(height, 0, -height));
-        Gizmos.DrawLine(transform.position + new Vector3(-height, 0, -height), transform.position + new Vector3(-height, 0, height));
-        Gizmos.DrawLine(transform.position + new Vector3(height, 0, height), transform.position + new Vector3(height, 0, -height));
-        Gizmos.DrawLine(transform.position + new Vector3(height, 0, height), transform.position + new Vector3(-height, 0, height));
+        Gizmos.DrawLine(transform.position + new Vector3(0, 0, -height), transform.position + new Vector3(height, 0, 0));
+        Gizmos.DrawLine(transform.position + new Vector3(0, 0, -height), transform.position + new Vector3(-height, 0, 0));
+        Gizmos.DrawLine(transform.position + new Vector3(0, 0, height), transform.position + new Vector3(height, 0, 0));
+        Gizmos.DrawLine(transform.position + new Vector3(0, 0, height), transform.position + new Vector3(-height, 0, 0));
 
-        Gizmos.DrawLine(transform.position + new Vector3(-height, 0, -height), transform.position + new Vector3(0, height, 0));
-        Gizmos.DrawLine(transform.position + new Vector3(-height, 0, height), transform.position + new Vector3(0, height, 0));
-        Gizmos.DrawLine(transform.position + new Vector3(height, 0, -height), transform.position + new Vector3(0, height, 0));
-        Gizmos.DrawLine(transform.position + new Vector3(height, 0, height), transform.position + new Vector3(0, height, 0));  
+        Gizmos.DrawLine(transform.position + new Vector3(0, 0, -height), transform.position + new Vector3(0, height, 0));
+        Gizmos.DrawLine(transform.position + new Vector3(0, 0, height), transform.position + new Vector3(0, height, 0));
+        Gizmos.DrawLine(transform.position + new Vector3(height, 0, 0), transform.position + new Vector3(0, height, 0));
+        Gizmos.DrawLine(transform.position + new Vector3(-height, 0, 0), transform.position + new Vector3(0, height, 0));  
 
-        Gizmos.DrawLine(transform.position + new Vector3(-height, 0, -height), transform.position + new Vector3(0, -height, 0));
-        Gizmos.DrawLine(transform.position + new Vector3(-height, 0, height), transform.position + new Vector3(0, -height, 0));
-        Gizmos.DrawLine(transform.position + new Vector3(height, 0, -height), transform.position + new Vector3(0, -height, 0));
-        Gizmos.DrawLine(transform.position + new Vector3(height, 0, height), transform.position + new Vector3(0, -height, 0));        
+        Gizmos.DrawLine(transform.position + new Vector3(0, 0, -height), transform.position + new Vector3(0, -height, 0));
+        Gizmos.DrawLine(transform.position + new Vector3(0, 0, height), transform.position + new Vector3(0, -height, 0));
+        Gizmos.DrawLine(transform.position + new Vector3(height, 0, 0), transform.position + new Vector3(0, -height, 0));
+        Gizmos.DrawLine(transform.position + new Vector3(-height, 0, 0), transform.position + new Vector3(0, -height, 0));  
     }
 }

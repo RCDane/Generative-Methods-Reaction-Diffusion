@@ -16,6 +16,10 @@ public class GeometryUtilities
         
     }
 
+    // public static Mesh RemoveSmallTriangles(Mesh mesh, float sizeThreshold){
+
+    // }
+
     public static Mesh CombineVertices(Mesh mesh, float threshold)
     {
         Vector3[] positions = mesh.vertices;

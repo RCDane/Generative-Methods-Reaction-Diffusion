@@ -1,5 +1,6 @@
 // Each #kernel tells which function to compile; you can have many kernels
 #pragma editor_sync_compilation
+
 #define THREAD_GROUP_SIZE 128
 
 #define EPSILON 0.000001
@@ -9,15 +10,39 @@
 #define WAVE_SPEED 0.4
 #define WAVE_DAMPING 0.8
 
+#define WAVE_SPEED 0.8
+#define WAVE_DAMPING 0.99
 // Create a RenderTexture with enableRandomWrite flag and set it
 // with cs.SetTexture
 StructuredBuffer<float3> _inputMesh;
-StructuredBuffer<float3> _inputColors;
-RWStructuredBuffer<float3> _outputColors;
+RWStructuredBuffer<float3> _inputColors;
 RWStructuredBuffer<float3> _outputMesh;
 StructuredBuffer<int> _inputVertexNeighbours;
 StructuredBuffer<int> _inputValence;
 int _inputMaxValence;
+
+
+
+
+bool IsInf(float x)
+{
+    return (asuint(x) & 0x7FFFFFFF) == 0x7F800000;
+}
+
+bool AnyIsInf(float2 v)
+{
+    return (IsInf(v.x) || IsInf(v.y));
+}
+
+bool AnyIsInf(float3 v)
+{
+    return (IsInf(v.x) || IsInf(v.y) || IsInf(v.z));
+}
+bool IsNaN(float x)
+{
+    return (asuint(x) & 0x7FFFFFFF) > 0x7F800000;
+}
+
 
 float cotan_angle(float3 pi, float3 pj, float3 pk)
 {
@@ -31,17 +56,27 @@ int mod(int x, int m) {
     return (x % m + m) % m;
 }
 
+bool AnyIsNaN(float2 v)
+{
+    return (IsNaN(v.x) || IsNaN(v.y));
+}
+
+bool AnyIsNaN(float3 v)
+{
+    return (IsNaN(v.x) || IsNaN(v.y) || IsNaN(v.z));
+}
+
 #pragma kernel CSLaplacian
 [numthreads(THREAD_GROUP_SIZE,1,1)]
 void CSLaplacian (uint3 id : SV_DispatchThreadID)
 {
     uint uid = id.x;
-    float3 lap = float3(0,0,0);
+    float3 lap = float3(0.,0.,0.);
     int valence = _inputValence[uid];
     float3 pi = _inputMesh[uid];
     float3 inputColor = _inputColors[uid]; 
-    float weights = 0;
-    float area = 0;
+    float weights = 0.;
+    float area = 0.;
     for (int i = 0; i < valence; i++)
     {
         int neighbor = _inputVertexNeighbours[uid*_inputMaxValence+i];
@@ -49,27 +84,46 @@ void CSLaplacian (uint3 id : SV_DispatchThreadID)
         float3 ka = _inputMesh[_inputVertexNeighbours[uid*_inputMaxValence+mod((i-1),valence)]];
         float3 kb = _inputMesh[_inputVertexNeighbours[uid*_inputMaxValence+mod((i+1),valence)]];
         float3 neighborColor = _inputColors[neighbor];
-        float a = cotan_angle(pi, pj, ka);
-        float b = cotan_angle(pi, pj, kb);
+        float a = max(cotan_angle(pi, pj, ka),EPSILON);
+        float b = max(cotan_angle(pi, pj, kb),EPSILON);
+        if (IsNaN(a) || IsNaN(b) || IsInf(a) || IsInf(b)){
+            a = 0;
+            b = 0;
+        }
         float ab = a + b;
         weights += ab;
         lap += ab*neighborColor;
         float3 ij = pj - pi;
         float3 ik = ka - pi;
-        float ar = length(cross(ij, ik));
+        float ar = max(length(cross(ij, ik)), EPSILON);
+        
         float angle = asin(ar / (length(ij) * length(ik) + EPSILON));
+        
         area += 0.5*ar*angle;
     }
     
-    // lap /= weights;
+    // lap -= weights*inputColor;
+    // lap /= (area + EPSILON);
+
+    // float verticalSpeed = inputColor.y;
+    // float waveHeight = inputColor.x;
+    // if (AnyIsNaN(lap) || AnyIsInf(lap) || AnyIsNaN(inputColor) || AnyIsInf(inputColor)){
+    //     lap = float3(0,0,0);
+    // }
+
+
     lap -= weights*inputColor;
-    // lap /= area/3.14159265 + EPSILON;
-    // lap = max(0.0, lap);
 
-    float delta_verticalSpeed  = lap.y;
-    float delta_waveHeight = lap.x;
+    if (AnyIsNaN(lap) || AnyIsInf(lap)){
+        lap = float3(0,0,0);
+    }
+    lap = max(0.0, lap);
+    float s = inputColor.x*WAVE_SPEED + WAVE_DAMPING * WAVE_SPEED*WAVE_SPEED * lap.y * DT;
+    float h = inputColor.y + s * DT;
+    _inputColors[uid] = min(1.0, max(0.0, float3(s, h, 0)));
 
+    // _inputColors[uid].y = IsNaN(s) ? 0. : s; 
+    // _inputColors[uid].x = IsNaN(h) ? 0. : h;
+    // _inputColors[uid].z = IsNaN(lap.z) ? 0. : lap.z;
     
-    _outputColors[uid].y = inputColor.y*WAVE_DAMPING + DT*(WAVE_SPEED*WAVE_SPEED*delta_waveHeight); 
-    _outputColors[uid].x = inputColor.x + DT*_outputColors[uid].y;
 }
