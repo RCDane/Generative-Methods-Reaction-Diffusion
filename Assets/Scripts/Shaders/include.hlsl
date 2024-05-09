@@ -38,6 +38,14 @@ void InterpolateNormal_float(float3 i, float3 red, float3 green, float3 blue, fl
     c = normalize(r+g+b+a);
 }
 
+void InterpolateObject_float(float3 i, float4 red, float4 green, float4 blue, out float4 c)
+{
+    float4 r = i.r*red;
+    float4 g = i.g*green;
+    float4 b = i.b*blue;
+    c = r+g+b;
+}
+
 #endif //INTERPOLATE_NORMAL
 
 

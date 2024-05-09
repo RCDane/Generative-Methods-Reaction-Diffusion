@@ -27,7 +27,7 @@ public class GPULaplacian : MonoBehaviour
     void Start()
     {
         meshFilter = GetComponent<MeshFilter>();
-        meshFilter.mesh = GeometryUtilities.CombineVertices(meshFilter.mesh, 0.0001f);
+        meshFilter.mesh = GeometryUtilities.WeldVertices(meshFilter.mesh, 0.00001f);
         mesh = meshFilter.mesh;
         meshFilter.sharedMesh = mesh;
 

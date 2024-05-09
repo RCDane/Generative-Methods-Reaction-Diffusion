@@ -71,6 +71,9 @@ public class GeometryUtilities
         Vector3[] vertices = mesh.vertices;
         Vector3[] normals = mesh.normals;
         Vector4[] tangents = mesh.tangents;
+        Color[] colors = mesh.colors;
+        bool hasColors = colors.Length > 0;
+        Debug.Log($"length: {colors.Length}, vertices: {vertices.Length}");
         Dictionary<Vector3, int> set = new Dictionary<Vector3, int>();
         List<int> indices = new List<int>();
         int[] map = new int[vertices.Length];
@@ -92,12 +95,14 @@ public class GeometryUtilities
         Vector3[] newVertices = new Vector3[indices.Count];
         Vector3[] newNormals = new Vector3[indices.Count];
         Vector4[] newTangents = new Vector4[indices.Count];
+        Color[] newColors = new Color[indices.Count];
         for (int i = 0; i < indices.Count; i++)
         {
             int index = indices[i];
             newVertices[i] = vertices[index];
             newNormals[i] = normals[index];
             newTangents[i] = tangents[index];
+            if (hasColors) newColors[i] = colors[index];
         }
         int[] newTriangles = mesh.triangles;
         for (int i = 0; i < newTriangles.Length; i++)
@@ -108,6 +113,7 @@ public class GeometryUtilities
         mesh.vertices = newVertices;
         mesh.normals = newNormals;
         mesh.tangents = newTangents;
+        if (hasColors) mesh.colors = newColors;
 
         mesh.RecalculateBounds();
         mesh.RecalculateNormals();
